@@ -2,7 +2,13 @@
 # MIT license; Copyright (c) 2019-2020 Damien P. George
 
 from . import core
-from errno import ECONNRESET, EPIPE
+
+from errno import ECONNRESET
+
+try:
+    from errno import EPIPE
+except ImportError:
+    EPIPE = 32
 
 
 class Stream:
