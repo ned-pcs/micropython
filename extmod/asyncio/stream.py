@@ -31,11 +31,11 @@ class Stream:
     def read(self, n=-1):
         r = b""
         while True:
-            yield core._io_queue.queue_read(self.s)
             try:
+                yield core._io_queue.queue_read(self.s)
                 r2 = self.s.read(n)
             except OSError as exc:
-                if exc.errno in (ECONNRESET, EPIPE) and len(r):
+                if exc.errno in (ECONNRESET, EPIPE):
                     return r
                 raise
             if r2 is not None:
@@ -67,8 +67,13 @@ class Stream:
     def readline(self):
         l = b""
         while True:
-            yield core._io_queue.queue_read(self.s)
-            l2 = self.s.readline()  # may do multiple reads but won't block
+            try:
+                yield core._io_queue.queue_read(self.s)
+                l2 = self.s.readline()  # may do multiple reads but won't block
+            except OSError as exc:
+                if exc.errno in (ECONNRESET, EPIPE):
+                    return l
+                raise
             if l2 is None:
                 continue
             l += l2
