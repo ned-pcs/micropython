@@ -2,6 +2,7 @@
 # MIT license; Copyright (c) 2019-2020 Damien P. George
 
 from . import core
+from errno import ECONNRESET, EPIPE
 
 
 class Stream:
@@ -25,7 +26,12 @@ class Stream:
         r = b""
         while True:
             yield core._io_queue.queue_read(self.s)
-            r2 = self.s.read(n)
+            try:
+                r2 = self.s.read(n)
+            except OSError as exc:
+                if exc.errno in (ECONNRESET, EPIPE) and len(r):
+                    return r
+                raise
             if r2 is not None:
                 if n >= 0:
                     return r2
